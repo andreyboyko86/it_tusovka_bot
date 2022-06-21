@@ -9,7 +9,7 @@ from config import settings
 from FromTwitter import TwitterMedia
 
 # Работа с твиттером
-Tweet = []
+
 
 def getNews(twitterName):
     consumer_key = settings['consumer_key']
@@ -18,7 +18,8 @@ def getNews(twitterName):
     access_token_secret = settings['access_token_secret']
     auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
     auth.set_access_token(access_token, access_token_secret)
-
+    items = []
+    Tweet = []
     search_words  = '#UkraineRussianWar'      #enter your words
     search_words2 = '#Ukrainewar'
     api = tweepy.API(auth, proxy='')
@@ -29,20 +30,23 @@ def getNews(twitterName):
         if str(element.full_text).find(search_words) ==0 or str(element.full_text).find(search_words2) ==0:
             media = element.entities.get('media', [])
             urls = element.entities.get('hashtags', [])
-            if(len(media) > 0) or (len(urls)>0):
+            if(len(media) > 0) or (len(urls)>0):  
                 try:
                     url_media = media[0]['media_url']
-                    Tweet.append({
-                    "date"  : element.created_at,
-                    "tweet" : re.sub(r'(," ")(?=$)',r'',re.sub(r"https?://[^,\s]+,?", "", element.full_text)),
-                    "url"   : url_media
-                    })
+                    if str(element.full_text) not in items:
+                            Tweet.append({
+                                        "date"  : element.created_at,
+                                        "tweet" : re.sub(r'(," ")(?=$)',r'',re.sub(r"https?://[^,\s]+,?", "", element.full_text)),
+                                         "url"   : url_media
+                                        }) 
+                            items.append(str(element.full_text))
                 except:
-                     Tweet.append({
-                    "date"  : element.created_at,
-                    "tweet" : re.sub(r'(," ")(?=$)',r'',re.sub(r"https?://[^,\s]+,?", "", element.full_text))
-                    })
-
+                   if str(element.full_text) not in items:
+                        Tweet.append({
+                                    "date"  : element.created_at,
+                                    "tweet" : re.sub(r'(," ")(?=$)',r'',re.sub(r"https?://[^,\s]+,?", "", element.full_text)),
+                                    }) 
+                        items.append(str(element.full_text))
     with open('tweets.json','w',encoding='utf-8') as file:
         json.dump(Tweet,file,indent=4,ensure_ascii=False,default=str)
 
