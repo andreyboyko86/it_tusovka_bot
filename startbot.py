@@ -9,6 +9,7 @@ from config import settings
 from FromTwitter import TwitterMedia
 
 # Работа с твиттером
+Tweet = []
 
 def getNews(twitterName):
     Tweet = []
@@ -22,7 +23,7 @@ def getNews(twitterName):
     search_words  = "#UkraineRussiaWar"      # фильтр по хештегам
     search_words2 = "#Ukrainewar"
     api = tweepy.API(auth, proxy='')
-    tweets_list= api.user_timeline(screen_name=twitterName, count=30,tweet_mode="extended",include_rts=False) # Get the last tweet
+    tweets_list= api.user_timeline(screen_name=twitterName, count=3,tweet_mode="extended",include_rts=False) # Get the last tweet
 
     tweet= tweets_list
     for element in tweet:
@@ -77,12 +78,15 @@ async def get_news(callback : types.CallbackQuery):
     News = getNews('Kartinamaslom5')
     with open('tweets.json',encoding="utf8") as file:
         data = json.load(file)
-        for message_ in data:
-            newNews = f"{hbold('Дата :')} {message_.get('date')}\n"\
+        if len(data) !=0:
+            for message_ in data:
+             newNews = f"{hbold('Дата :')} {message_.get('date')}\n"\
                       f"{hbold('Новость:')} {message_.get('tweet')}\n"\
                       f"{hbold('Подробности:')} {message_.get('url')}\n"
                       
             await callback.message.answer(newNews)
+        else:
+            await callback.message.answer('Новостей нет! Совсем нет!') 
 
 # запускаем программу
 if __name__ == '__main__':
