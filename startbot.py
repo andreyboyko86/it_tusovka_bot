@@ -19,23 +19,30 @@ def getNews(twitterName):
     auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
     auth.set_access_token(access_token, access_token_secret)
 
-    search_words  = "#UkraineRussiaWar"      # фильтр по хештегам
-    search_words2 = "#Ukrainewar"
+    search_words  = '#UkraineRussianWar'      #enter your words
+    search_words2 = '#Ukrainewar'
     api = tweepy.API(auth, proxy='')
-    tweets_list= api.user_timeline(screen_name=twitterName, count=3,tweet_mode="extended",include_rts=False) # Get the last tweet
+    tweets_list= api.user_timeline(screen_name=twitterName, count=10,tweet_mode="extended",include_rts=False) # Get the last tweet
 
     tweet= tweets_list
     for element in tweet:
-        if search_words in str(element.full_text) or search_words2 in str(element.full_text):
+        if str(element.full_text).find(search_words) ==0 or str(element.full_text).find(search_words2) ==0:
             media = element.entities.get('media', [])
-            if(len(media) > 0):
-                url_media = media[0]['media_url']
-                # Созаем список словарей
-                Tweet.append({
+            urls = element.entities.get('hashtags', [])
+            if(len(media) > 0) or (len(urls)>0):
+                try:
+                    url_media = media[0]['media_url']
+                    Tweet.append({
                     "date"  : element.created_at,
                     "tweet" : re.sub(r'(," ")(?=$)',r'',re.sub(r"https?://[^,\s]+,?", "", element.full_text)),
-                    "url"   : url_media})
-    # сохраяем в файл       
+                    "url"   : url_media
+                    })
+                except:
+                     Tweet.append({
+                    "date"  : element.created_at,
+                    "tweet" : re.sub(r'(," ")(?=$)',r'',re.sub(r"https?://[^,\s]+,?", "", element.full_text))
+                    })
+
     with open('tweets.json','w',encoding='utf-8') as file:
         json.dump(Tweet,file,indent=4,ensure_ascii=False,default=str)
 
@@ -79,11 +86,10 @@ async def get_news(callback : types.CallbackQuery):
         data = json.load(file)
         if len(data) !=0:
             for message_ in data:
-             newNews = f"{hbold('Дата :')} {message_.get('date')}\n"\
+                newNews = f"{hbold('Дата :')} {message_.get('date')}\n"\
                       f"{hbold('Новость:')} {message_.get('tweet')}\n"\
                       f"{hbold('Подробности:')} {message_.get('url')}\n"
-                      
-            await callback.message.answer(newNews)
+                await callback.message.answer(newNews)
         else:
             await callback.message.answer('Новостей нет! Совсем нет!') 
 
