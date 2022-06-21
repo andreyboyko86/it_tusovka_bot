@@ -12,7 +12,6 @@ from FromTwitter import TwitterMedia
 Tweet = []
 
 def getNews(twitterName):
-    Tweet = []
     consumer_key = settings['consumer_key']
     consumer_secret = settings['consumer_secret']
     access_token = settings['access_token']
@@ -53,7 +52,7 @@ async def on_startup(_):
 
 # Создаем кнопки бота
 
-InlKB = InlineKeyboardMarkup(row_width=1).add(InlineKeyboardButton(text='Получить последние новости',callback_data='News'))
+InlKB = InlineKeyboardMarkup(row_width=1).add(InlineKeyboardButton(text='Узнать обстановку на фронте',callback_data='News'))
 
 # Хендлеры бота
 
