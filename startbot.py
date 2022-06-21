@@ -1,3 +1,4 @@
+from ast import Lambda
 from aiogram import Bot, Dispatcher,types
 from aiogram.utils import executor
 from aiogram.utils.markdown import hbold
@@ -7,6 +8,12 @@ import json
 import re
 from config import settings
 from FromTwitter import TwitterMedia
+import datetime as DT
+import asyncio
+
+#Константы
+
+CHAT_BY_DATETIME = dict()
 
 # Работа с твиттером
 
@@ -69,7 +76,9 @@ InlKB = InlineKeyboardMarkup(row_width=1).add(InlineKeyboardButton(text='Узн�
 
 @dp.message_handler(commands=['start','help'])
 async def command_start(message : types.Message):
-    await bot.send_message(message.chat.id,'Бот запущен. Жди хороших новостей или не очень',reply_markup=InlKB)
+   
+        
+    await bot.send_message(message.chat.id,'Бот запущен! Пацаны не спят, пацаны мониторят обстановку на фронте',reply_markup=InlKB)
 
 @dp.message_handler()
 async def bot_message(message: types.Message):
@@ -85,18 +94,51 @@ async def bot_message(message: types.Message):
 
 @dp.callback_query_handler(text='News')
 async def get_news(callback : types.CallbackQuery):
-    News = getNews('Kartinamaslom5')
-    with open('tweets.json',encoding="utf8") as file:
-        data = json.load(file)
-        if len(data) !=0:
-            for message_ in data:
-                newNews = f"{hbold('Дата :')} {message_.get('date')}\n"\
-                      f"{hbold('Новость:')} {message_.get('tweet')}\n"\
-                      f"{hbold('Подробности:')} {message_.get('url')}\n"
-                await callback.message.answer(newNews)
-        else:
-            await callback.message.answer('Новостей нет! Совсем нет!') 
+   
+    need_seconds = 50
+    current_time = DT.datetime.now()
+    last_datetime = CHAT_BY_DATETIME.get(callback.message.chat.id)
+    text ='^'
 
+    # Если первое сообщение (время не задано)
+    if not last_datetime:
+        CHAT_BY_DATETIME[callback.message.chat.id] = current_time
+        getNews('Kartinamaslom5')
+        with open('tweets.json',encoding="utf8") as file:
+            data = json.load(file)
+            if len(data) !=0:
+                for message_ in data:
+                    newNews = f"{hbold('Дата :')} {message_.get('date')}\n"\
+                        f"{hbold('Новость:')} {message_.get('tweet')}\n"\
+                        f"{hbold('Подробности:')} {message_.get('url')}\n"
+                    await callback.message.answer(newNews)
+            else:
+                await callback.message.answer('Новостей нет! Совсем нет!') 
+    else:
+        # Разница в секундах между текущим временем и временем последнего сообщения
+        delta_seconds = (current_time - last_datetime).total_seconds()
+        # Осталось ждать секунд перед отправкой
+        seconds_left = int(need_seconds - delta_seconds)
+        # Если время ожидания не закончилось
+        if seconds_left > 0:
+             text = f'Подождите {seconds_left} секунд перед выполнение этой команды'
+        else:
+            CHAT_BY_DATETIME[callback.message.chat.id] = current_time
+            getNews('Kartinamaslom5')
+            with open('tweets.json',encoding="utf8") as file:
+                data = json.load(file)
+                if len(data) !=0:
+                    for message_ in data:
+                        newNews = f"{hbold('Дата :')} {message_.get('date')}\n"\
+                            f"{hbold('Новость:')} {message_.get('tweet')}\n"\
+                            f"{hbold('Подробности:')} {message_.get('url')}\n"
+                        await callback.message.answer(newNews)
+                else:
+                    await callback.message.answer('Новостей нет! Совсем нет!') 
+            
+        await callback.message.answer(text)
+                
+   
 # запускаем программу
 if __name__ == '__main__':
 # указание skip_updates=True
